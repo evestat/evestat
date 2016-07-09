@@ -12,118 +12,135 @@
         </style> 
         <script src="js/three.min.js"></script>
         <script src="js/OrbitControls.js"></script>
-        <script src="js/stats.min.js"></script>
 
         <script src="data/eve.js"></script>
         <script src="data/wormhole.js"></script>
     </head>
     <body>
         <div id="container"></div>
+        <script>
+        var container, camera, group,
+            scene, renderer,
+            geometry, material, container;
 
-<script>
-var container, camera, group,
-    scene, renderer, stats,
-    geometry, material, container;
+        var divider = 1000000000000000;
 
-var divider = 1000000000000000;
+        // var solarsystems = jsonwormhole;
+        var solarsystems = jsoneve;
+        // var solarsystems = {
+        //     23: { 
+        //         solarSystemID: 23,
+        //         solarSystemName: 'Sample',
+        //         center: {
+        //             x: 0,
+        //             y: 0,
+        //             z: 0
+        //         },
+        //         stargates: [24, 25]
+        //     }
+        // };
 
-var solarsystems = jsonwormhole;
+        init();
+        animate();
 
-// var solarsystems = {
-//     23: { 
-//         solarSystemID: 23,
-//         solarSystemName: 'Sample',
-//         center: {
-//             x: 0,
-//             y: 0,
-//             z: 0
-//         },
-//         stargates: [24, 25]
-//     }
-// };
+        function init() {
+            // camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
+            // camera.position.x = 8000;
+            // camera.position.y = 10;
+            // camera.position.z = -9000;
 
-init();
-animate();
+            camera.position.z = 1000;    
+            // scene
+            scene = new THREE.Scene();
+            renderer = new THREE.WebGLRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            container = document.getElementById( 'container' );
+            var controls = new THREE.OrbitControls( camera, container );
+            group = new THREE.Group();
+            scene.add( group );
 
-function init() {
-    // camera
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
-    camera.position.x = 8000;
-    camera.position.y = 10;
-    camera.position.z = -9000;
+            container.appendChild( renderer.domElement );
 
-    // camera.position.z = 1000;    
-    
-    // scene
-    scene = new THREE.Scene();
-    renderer = new THREE.WebGLRenderer();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+            /*
+                dummy generate objects
+             */
+            var keys = Object.keys(solarsystems);
+            var geometry = new THREE.SphereGeometry( 1, 8, 8 );
+            var materials = getMaterials(THREE.MeshBasicMaterial);
+            for ( var i = 0, elem, key; i < keys.length; i ++ ) {
+                key = keys[i];
+                elem = solarsystems[key];
+                elem.securityStatusNorm = Math.abs(elem.security < 0 ? 0 : elem.security).toFixed(1)
+                var sphere = new THREE.Mesh( geometry, materials[elem.securityStatusNorm] );
+                sphere.position.x = Math.round(elem.center.x / divider);
+                sphere.position.y = Math.round(elem.center.y / divider);
+                sphere.position.z = Math.round(elem.center.z / divider);
+                // console.log(sphere.position.x, sphere.position.y, sphere.position.z);
+                solarsystems[key].object = sphere;
+                group.add( sphere );
+            }
 
-    container = document.getElementById( 'container' );
-    var controls = new THREE.OrbitControls( camera, container );
-    group = new THREE.Group();
-    scene.add( group );
+            var lineMaterials = getMaterials(THREE.LineBasicMaterial);
 
-    container.appendChild( renderer.domElement );
-    stats = new Stats();
-    container.appendChild( stats.dom );
+            /*
+                Dummy generate links
+             */
+            for ( var i = 0, key, system; i < keys.length; i ++ ) {
+                key = keys[i];
+                system = solarsystems[key];
+                for ( var j = 0; j < system.stargates.length; j ++ ) {
+                    var geometry = new THREE.Geometry();
+                    var target = solarsystems[system.stargates[j]];
+                    geometry.vertices.push(
+                        system.object.position,
+                        target.object.position
+                    );
+                    var secStatus = system.securityStatusNorm < target.securityStatusNorm ? system.securityStatusNorm : target.securityStatusNorm;
+                    var line = new THREE.Line( geometry, lineMaterials[secStatus] );
+                    group.add( line );
+                }
+            }
 
-    /*
-        dummy generate objects
-     */
-    var keys = Object.keys(solarsystems);
-    var geometry = new THREE.SphereGeometry( 10, 8, 8 );
-    var material = new THREE.MeshBasicMaterial( {color: 0xafafa0} );
-    for ( var i = 0, elem, key; i < keys.length; i ++ ) {
-        key = keys[i];
-        elem = solarsystems[key];
-        var sphere = new THREE.Mesh( geometry, material );
-        sphere.position.x = Math.round(elem.center.x / divider);
-        sphere.position.y = Math.round(elem.center.y / divider);
-        sphere.position.z = Math.round(elem.center.z / divider);
-        // console.log(sphere.position.x, sphere.position.y, sphere.position.z);
-        solarsystems[key].object = sphere;
-        group.add( sphere );
-    }
-
-    var materialLine = new THREE.LineBasicMaterial({
-        color: 0x0000ff
-    });
-
-    /*
-        Dummy generate links
-     */
-    for ( var i = 0, key, elem; i < keys.length; i ++ ) {
-        key = keys[i];
-        elem = solarsystems[key];
-        for ( var j = 0; j < elem.stargates.length; j ++ ) {
-            var geometry = new THREE.Geometry();
-            geometry.vertices.push(
-                elem.object.position,
-                solarsystems[elem.stargates[j]].object.position
-            );
-            var line = new THREE.Line( geometry, materialLine );
-            group.add( line );
+            staticInit();
         }
-    }
 
-    staticInit();
-}
+        function staticInit() {
+            window.addEventListener( 'resize', function() {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize( window.innerWidth, window.innerHeight );
+            }, false );
+        }
 
-function staticInit() {
-    window.addEventListener( 'resize', function() {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize( window.innerWidth, window.innerHeight );
-    }, false );
-}
+        function animate() {
+            requestAnimationFrame(animate);
+            // var time = Date.now() * 0.001;
+            // group.rotation.y = time * 0.1;
+            renderer.render(scene, camera);
+        }
 
-function animate() {
-    requestAnimationFrame(animate);
-    // var time = Date.now() * 0.001;
-    // group.rotation.y = time * 0.1;
-    renderer.render(scene, camera);
-}
-</script>
+        function getMaterials(matherialClass) {
+            var securityColors = {
+                '0.0':0xff0000,
+                '0.1':0xff0000,
+                '0.2':0xff8c00,
+                '0.3':0xff8c00,
+                '0.4':0xff8c00,
+                '0.5':0xadff2f,
+                '0.6':0x008000,
+                '0.7':0x008000,
+                '0.8':0x008000,
+                '0.9':0x008000,
+                '1.0':0x008000
+            }
+            var securityMaterials = {};
+            let securityKeys = Object.keys(securityColors);
+            for(let i of securityKeys) {
+                securityMaterials[i] = new matherialClass( {color: securityColors[i] } );
+            }
+            return securityMaterials;
+        }
+        </script>
     </body>
 </html>
