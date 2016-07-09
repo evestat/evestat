@@ -1,0 +1,129 @@
+<!DOCTYPE HTML>
+<html lang="en">
+    <head>
+        <title>Constellation display</title>
+        <meta charset="utf-8">
+
+        <style type="text/css">
+            body {
+                background-color: #000000;
+                overflow: hidden;
+            }
+        </style> 
+        <script src="js/three.min.js"></script>
+        <script src="js/OrbitControls.js"></script>
+        <script src="js/stats.min.js"></script>
+
+        <script src="data/eve.js"></script>
+        <script src="data/wormhole.js"></script>
+    </head>
+    <body>
+        <div id="container"></div>
+
+<script>
+var container, camera, group,
+    scene, renderer, stats,
+    geometry, material, container;
+
+var divider = 1000000000000000;
+
+var solarsystems = jsonwormhole;
+
+// var solarsystems = {
+//     23: { 
+//         solarSystemID: 23,
+//         solarSystemName: 'Sample',
+//         center: {
+//             x: 0,
+//             y: 0,
+//             z: 0
+//         },
+//         stargates: [24, 25]
+//     }
+// };
+
+init();
+animate();
+
+function init() {
+    // camera
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
+    camera.position.x = 8000;
+    camera.position.y = 10;
+    camera.position.z = -9000;
+
+    // camera.position.z = 1000;    
+    
+    // scene
+    scene = new THREE.Scene();
+    renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    container = document.getElementById( 'container' );
+    var controls = new THREE.OrbitControls( camera, container );
+    group = new THREE.Group();
+    scene.add( group );
+
+    container.appendChild( renderer.domElement );
+    stats = new Stats();
+    container.appendChild( stats.dom );
+
+    /*
+        dummy generate objects
+     */
+    var keys = Object.keys(solarsystems);
+    var geometry = new THREE.SphereGeometry( 10, 8, 8 );
+    var material = new THREE.MeshBasicMaterial( {color: 0xafafa0} );
+    for ( var i = 0, elem, key; i < keys.length; i ++ ) {
+        key = keys[i];
+        elem = solarsystems[key];
+        var sphere = new THREE.Mesh( geometry, material );
+        sphere.position.x = Math.round(elem.center.x / divider);
+        sphere.position.y = Math.round(elem.center.y / divider);
+        sphere.position.z = Math.round(elem.center.z / divider);
+        // console.log(sphere.position.x, sphere.position.y, sphere.position.z);
+        solarsystems[key].object = sphere;
+        group.add( sphere );
+    }
+
+    var materialLine = new THREE.LineBasicMaterial({
+        color: 0x0000ff
+    });
+
+    /*
+        Dummy generate links
+     */
+    for ( var i = 0, key, elem; i < keys.length; i ++ ) {
+        key = keys[i];
+        elem = solarsystems[key];
+        for ( var j = 0; j < elem.stargates.length; j ++ ) {
+            var geometry = new THREE.Geometry();
+            geometry.vertices.push(
+                elem.object.position,
+                solarsystems[elem.stargates[j]].object.position
+            );
+            var line = new THREE.Line( geometry, materialLine );
+            group.add( line );
+        }
+    }
+
+    staticInit();
+}
+
+function staticInit() {
+    window.addEventListener( 'resize', function() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize( window.innerWidth, window.innerHeight );
+    }, false );
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    // var time = Date.now() * 0.001;
+    // group.rotation.y = time * 0.1;
+    renderer.render(scene, camera);
+}
+</script>
+    </body>
+</html>
