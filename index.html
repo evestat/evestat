@@ -50,7 +50,9 @@
             // camera.position.y = 10;
             // camera.position.z = -9000;
 
-            camera.position.z = 1000;    
+            camera.position.x = -0.000001;
+            camera.position.y = 630;
+            camera.position.z = -0.000001;
             // scene
             scene = new THREE.Scene();
             renderer = new THREE.WebGLRenderer();
@@ -62,9 +64,13 @@
 
             container.appendChild( renderer.domElement );
 
-            /*
-                dummy generate objects
-             */
+            drawSystems(group);
+            drawLinks(group);
+
+            staticInit();
+        }
+
+        function drawSystems(group) {
             var keys = Object.keys(solarsystems);
             var geometry = new THREE.SphereGeometry( 1, 8, 8 );
             var materials = getMaterials(THREE.MeshBasicMaterial);
@@ -80,10 +86,7 @@
                 solarsystems[key].object = sphere;
                 group.add( sphere );
             }
-
-            drawLinks(group);
-
-            staticInit();
+            console.log('Systems ', keys.length);
         }
 
         function drawLinks(group) {
@@ -116,7 +119,7 @@
                     group.add( line );
                 }
             }
-            console.log(cntLines);
+            console.log('Links' , cntLines);
         }
 
         function staticInit() {
