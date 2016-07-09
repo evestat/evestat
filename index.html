@@ -81,17 +81,32 @@
                 group.add( sphere );
             }
 
-            var lineMaterials = getMaterials(THREE.LineBasicMaterial);
+            drawLinks(group);
 
-            /*
-                Dummy generate links
-             */
+            staticInit();
+        }
+
+        function drawLinks(group) {
+            var lineMaterials = getMaterials(THREE.LineBasicMaterial);
+            var exstLinks = {};
+            var cntLines = 0;
+
+            var keys = Object.keys(solarsystems);
             for ( var i = 0, key, system; i < keys.length; i ++ ) {
                 key = keys[i];
                 system = solarsystems[key];
                 for ( var j = 0; j < system.stargates.length; j ++ ) {
-                    var geometry = new THREE.Geometry();
                     var target = solarsystems[system.stargates[j]];
+
+                    if(exstLinks[system.solarSystemName + target.solarSystemName] || exstLinks[target.solarSystemName + system.solarSystemName]) {
+                        continue;
+                    }
+                    exstLinks[system.solarSystemName + target.solarSystemName] = true;
+                    exstLinks[target.solarSystemName + system.solarSystemName] = true;
+
+                    cntLines ++;
+
+                    var geometry = new THREE.Geometry();
                     geometry.vertices.push(
                         system.object.position,
                         target.object.position
@@ -101,8 +116,7 @@
                     group.add( line );
                 }
             }
-
-            staticInit();
+            console.log(cntLines);
         }
 
         function staticInit() {
