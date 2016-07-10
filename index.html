@@ -24,8 +24,8 @@
             geometry, material, container;
 
         var divider = 1000000000000000;
+        var objects = [];
 
-        // var solarsystems = jsonwormhole;
         var solarsystems = jsoneve;
         // var solarsystems = {
         //     23: { 
@@ -45,29 +45,22 @@
 
         function init() {
             // camera
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
-            // camera.position.x = 8000;
-            // camera.position.y = 10;
-            // camera.position.z = -9000;
-
-            camera.position.x = -0.000001;
-            camera.position.y = 630;
-            camera.position.z = -0.000001;
-            // scene
+            camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 10000 );
+            camera.position.set( -0.000001, 630, -0.000001 );
+            
             scene = new THREE.Scene();
             renderer = new THREE.WebGLRenderer();
+            renderer.setPixelRatio( window.devicePixelRatio );
             renderer.setSize(window.innerWidth, window.innerHeight);
             container = document.getElementById( 'container' );
+
             var controls = new THREE.OrbitControls( camera, container );
             group = new THREE.Group();
             scene.add( group );
-
             container.appendChild( renderer.domElement );
 
             drawSystems(group);
             drawLinks(group);
-
-            staticInit();
         }
 
         function drawSystems(group) {
@@ -82,9 +75,9 @@
                 sphere.position.x = Math.round(elem.center.x / divider);
                 sphere.position.y = Math.round(elem.center.y / divider);
                 sphere.position.z = Math.round(elem.center.z / divider);
-                // console.log(sphere.position.x, sphere.position.y, sphere.position.z);
                 solarsystems[key].object = sphere;
                 group.add( sphere );
+                objects.push(sphere);
             }
             console.log('Systems ', keys.length);
         }
@@ -122,18 +115,8 @@
             console.log('Links' , cntLines);
         }
 
-        function staticInit() {
-            window.addEventListener( 'resize', function() {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize( window.innerWidth, window.innerHeight );
-            }, false );
-        }
-
         function animate() {
             requestAnimationFrame(animate);
-            // var time = Date.now() * 0.001;
-            // group.rotation.y = time * 0.1;
             renderer.render(scene, camera);
         }
 
