@@ -1,14 +1,14 @@
 {
   "name": "evestat",
   "version": "1.0.0",
-  "description": "",
+  "description": "Static html render of eve map",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "process": "node index"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["eve", "map", "static"],
+  "author": "Noone",
   "license": "ISC",
   "dependencies": {
     "glob": "^7.0.5",
